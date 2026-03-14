@@ -1,0 +1,35 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+target/
+*.class
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# NetBeans
+nb-configuration.xml
+nbactions.xml
+
+# Fichiers de build
+*.log
+*.war
+*.ear
+*.jar
+!mysql-connector*.jar
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Fichiers temporaires
+*.tmp
+*.bak
+*.swp
+*~
+
+# Configuration spécifique utilisateur
+*.user
+*.userl
