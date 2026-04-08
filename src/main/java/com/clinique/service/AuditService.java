@@ -20,6 +20,7 @@ public class AuditService {
     @Autowired
     private AuthService authService;
 
+    // Méthode existante - pour l'interface web (avec session)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(String action, String entite, Long entiteId, String details) {
         AuditLog log = new AuditLog();
@@ -37,6 +38,21 @@ public class AuditService {
         } catch (Exception e) {
             log.setAdresseIp("INCONNUE");
         }
+
+        auditLogDAO.save(log);
+    }
+
+    // NOUVELLE MÉTHODE - pour l'API .NET (avec utilisateur explicite)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logFromApi(String action, String entite, Long entiteId, String details, String utilisateur) {
+        AuditLog log = new AuditLog();
+
+        log.setUtilisateur(utilisateur != null && !utilisateur.isEmpty() ? utilisateur : "API");
+        log.setAction(action);
+        log.setEntite(entite);
+        log.setEntiteId(entiteId);
+        log.setDetails(details);
+        log.setAdresseIp("API_CALL");
 
         auditLogDAO.save(log);
     }

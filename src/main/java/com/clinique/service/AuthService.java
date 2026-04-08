@@ -1,7 +1,10 @@
 package com.clinique.service;
 
 import com.clinique.dao.UtilisateurDAO;
+import com.clinique.entity.Admin;
+import com.clinique.entity.Medecin;
 import com.clinique.entity.Utilisateur;
+import com.clinique.enums.Role;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,8 @@ public class AuthService {
 
     @Autowired
     private AuditService auditService;
+
+    // ========== MÉTHODES EXISTANTES ==========
 
     @Transactional
     public Utilisateur login(String login, String motDePasse) {
@@ -40,7 +45,6 @@ public class AuthService {
         utilisateurDAO.save(utilisateur);
 
         HttpSession session = getSession();
-        // ✅ Stocker seulement l'ID en session (pas l'objet complet)
         session.setAttribute("userId", utilisateur.getId());
 
         auditService.log("LOGIN", utilisateur.getClass().getSimpleName(),
@@ -69,7 +73,7 @@ public class AuthService {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId != null) {
-            return utilisateurDAO.findById(userId);  // Retourne Admin ou Medecin
+            return utilisateurDAO.findById(userId);
         }
         return null;
     }
@@ -91,5 +95,55 @@ public class AuthService {
     private HttpSession getSession() {
         ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
         return attr.getRequest().getSession(true);
+    }
+
+    // ========== NOUVELLES MÉTHODES POUR LA CRÉATION ==========
+
+    @Transactional
+    public Admin createAdmin(Admin admin) {
+        // Vérifier si le login existe déjà
+        if (utilisateurDAO.existsByLogin(admin.getLogin())) {
+            throw new RuntimeException("Un utilisateur avec ce login existe déjà");
+        }
+
+        // Vérifier si l'email existe déjà
+        if (utilisateurDAO.existsByEmail(admin.getEmail())) {
+            throw new RuntimeException("Un utilisateur avec cet email existe déjà");
+        }
+
+        admin.setRole(Role.ADMIN);
+        admin.setActif(true);
+        admin.setDateCreation(LocalDateTime.now());
+
+        Admin saved = (Admin) utilisateurDAO.save(admin);
+
+        auditService.log("CREATE", "Admin", saved.getId(),
+                "Création administrateur: " + saved.getLogin());
+
+        return saved;
+    }
+
+    @Transactional
+    public Medecin createMedecin(Medecin medecin) {
+        // Vérifier si le login existe déjà
+        if (utilisateurDAO.existsByLogin(medecin.getLogin())) {
+            throw new RuntimeException("Un utilisateur avec ce login existe déjà");
+        }
+
+        // Vérifier si l'email existe déjà
+        if (utilisateurDAO.existsByEmail(medecin.getEmail())) {
+            throw new RuntimeException("Un utilisateur avec cet email existe déjà");
+        }
+
+        medecin.setRole(Role.MEDECIN);
+        medecin.setActif(true);
+        medecin.setDateCreation(LocalDateTime.now());
+
+        Medecin saved = (Medecin) utilisateurDAO.save(medecin);
+
+        auditService.log("CREATE", "Medecin", saved.getId(),
+                "Création médecin: " + saved.getLogin());
+
+        return saved;
     }
 }

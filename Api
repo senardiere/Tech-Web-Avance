@@ -1,0 +1,906 @@
+# API COMPLETE - ERP Clinique
+
+## Base URL
+```
+http://localhost:5089/api
+```
+
+## Sommaire
+1. [Authentification](#1-authentification)
+2. [Consultations](#2-consultations)
+3. [Patients](#3-patients)
+4. [Médecins](#4-médecins)
+5. [Rendez-vous](#5-rendez-vous)
+6. [Spécialités](#6-spécialités)
+7. [Audit](#7-audit)
+
+---
+
+## 1. Authentification
+
+### 1.1 Connexion
+```http
+POST /auth/login
+```
+**Body :**
+```json
+{
+  "login": "admin",
+  "motDePasse": "admin123"
+}
+```
+**Réponse :**
+```json
+{
+  "id": 1,
+  "login": "admin",
+  "nom": "Admin",
+  "prenom": "Principal",
+  "email": "admin@clinique.local",
+  "role": "ADMIN",
+  "actif": true,
+  "type": "ADMIN"
+}
+```
+
+### 1.2 Déconnexion
+```http
+POST /auth/logout
+```
+**Réponse :**
+```json
+{
+  "message": "Déconnecté avec succès"
+}
+```
+
+### 1.3 Utilisateur courant
+```http
+GET /auth/current-user
+```
+**Réponse :**
+```json
+{
+  "authenticated": true,
+  "id": 1,
+  "login": "admin",
+  "nom": "Admin",
+  "prenom": "Principal",
+  "email": "admin@clinique.local",
+  "role": "ADMIN",
+  "actif": true
+}
+```
+
+### 1.4 Vérifier si authentifié
+```http
+GET /auth/is-authenticated
+```
+**Réponse :**
+```json
+{
+  "authenticated": true
+}
+```
+
+### 1.5 Vérifier si Admin
+```http
+GET /auth/is-admin
+```
+**Réponse :**
+```json
+{
+  "isAdmin": true
+}
+```
+
+### 1.6 Vérifier si Médecin
+```http
+GET /auth/is-medecin
+```
+**Réponse :**
+```json
+{
+  "isMedecin": false
+}
+```
+
+### 1.7 Créer un Administrateur
+```http
+POST /auth/admins
+```
+**Body :**
+```json
+{
+  "nom": "Dupont",
+  "prenom": "Jean",
+  "email": "jean@clinique.com",
+  "login": "jdupont",
+  "motDePasse": "password123",
+  "telephone": "0123456789",
+  "departement": "IT"
+}
+```
+**Réponse :**
+```json
+{
+  "id": 2,
+  "login": "jdupont",
+  "nom": "Dupont",
+  "prenom": "Jean",
+  "email": "jean@clinique.com",
+  "role": "ADMIN"
+}
+```
+
+### 1.8 Créer un Médecin
+```http
+POST /auth/medecins
+```
+**Body :**
+```json
+{
+  "nom": "Martin",
+  "prenom": "Sophie",
+  "email": "sophie@clinique.com",
+  "login": "smartin",
+  "motDePasse": "password123",
+  "telephone": "0123456789",
+  "numeroLicence": "LIC12345",
+  "cabinet": "Centre Médical",
+  "specialiteId": 1
+}
+```
+**Réponse :**
+```json
+{
+  "id": 3,
+  "login": "smartin",
+  "nom": "Martin",
+  "prenom": "Sophie",
+  "email": "sophie@clinique.com",
+  "role": "MEDECIN"
+}
+```
+
+---
+
+## 2. Consultations
+
+### 2.1 Liste des consultations
+```http
+GET /consultations
+```
+**Réponse :**
+```json
+[
+  {
+    "id": 1,
+    "patientId": 1,
+    "patientNom": "Rakoto",
+    "patientPrenom": "Jean",
+    "medecinId": 2,
+    "medecinNom": "Dupont",
+    "medecinPrenom": "Jean",
+    "dateConsultation": "2024-03-03T19:28:42",
+    "statut": "TERMINEE",
+    "motif": "Douleur",
+    "diagnostic": "Angine",
+    "prescription": "Antibiotiques",
+    "montant": 45.00
+  }
+]
+```
+
+### 2.2 Consultation par ID
+```http
+GET /consultations/{id}
+```
+
+### 2.3 Consultations d'un patient
+```http
+GET /consultations/patient/{patientId}
+```
+
+### 2.4 Consultations d'un médecin
+```http
+GET /consultations/medecin/{medecinId}
+```
+
+### 2.5 Dernières consultations d'un médecin
+```http
+GET /consultations/medecin/{medecinId}/dernieres?limit=10
+```
+
+### 2.6 Créer une consultation
+```http
+POST /consultations
+```
+**Body :**
+```json
+{
+  "patientId": 1,
+  "medecinId": 2,
+  "motif": "Douleur thoracique",
+  "diagnostic": "Angine",
+  "prescription": "Antibiotiques",
+  "montant": 45.00
+}
+```
+
+### 2.7 Créer consultation depuis rendez-vous
+```http
+POST /consultations/from-rendezvous/{rendezVousId}
+```
+
+### 2.8 Créer consultation directe
+```http
+POST /consultations/directe
+```
+**Body :** (identique à création)
+
+### 2.9 Modifier une consultation
+```http
+PUT /consultations/{id}
+```
+**Body :**
+```json
+{
+  "motif": "Nouveau motif",
+  "diagnostic": "Nouveau diagnostic",
+  "prescription": "Nouvelle prescription",
+  "montant": 50.00
+}
+```
+
+### 2.10 Terminer une consultation
+```http
+PATCH /consultations/{id}/terminer
+```
+
+### 2.11 Supprimer une consultation
+```http
+DELETE /consultations/{id}
+```
+
+### 2.12 Statistiques
+```http
+GET /consultations/stats/total
+```
+**Réponse :** `45`
+
+```http
+GET /consultations/stats/medecin/{medecinId}
+```
+**Réponse :** `12`
+
+---
+
+## 3. Patients
+
+### 3.1 Liste des patients
+```http
+GET /patients
+```
+**Réponse :**
+```json
+[
+  {
+    "id": 1,
+    "nom": "Rakoto",
+    "prenom": "Jean",
+    "email": "jean@email.com",
+    "telephone": "0123456789",
+    "adresse": "123 Rue de Paris",
+    "dateNaissance": "1980-01-01T00:00:00",
+    "statut": "ACTIF",
+    "dateCreation": "2024-03-10T20:57:50",
+    "medecinTraitant": {
+      "id": 2,
+      "nom": "Dupont",
+      "prenom": "Jean"
+    }
+  }
+]
+```
+
+### 3.2 Patients actifs
+```http
+GET /patients/actifs
+```
+
+### 3.3 Patient par ID
+```http
+GET /patients/{id}
+```
+
+### 3.4 Rechercher un patient
+```http
+GET /patients/search?nom={nom}
+```
+
+### 3.5 Derniers patients
+```http
+GET /patients/derniers?limit=10
+```
+
+### 3.6 Patients d'un médecin
+```http
+GET /patients/medecin/{medecinId}
+```
+
+### 3.7 Créer un patient
+```http
+POST /patients
+```
+**Body :**
+```json
+{
+  "nom": "Rakoto",
+  "prenom": "Jean",
+  "email": "jean@email.com",
+  "telephone": "0123456789",
+  "adresse": "123 Rue de Paris",
+  "dateNaissance": "1980-01-01T00:00:00",
+  "numeroSecuriteSociale": "1800101010101",
+  "mutuelle": "Mutuelle Générale",
+  "personneContact": "Marie Rakoto",
+  "telephoneContact": "0987654321",
+  "medecinTraitantId": 2
+}
+```
+
+### 3.8 Modifier un patient
+```http
+PUT /patients/{id}
+```
+**Body :**
+```json
+{
+  "nom": "Rakoto",
+  "prenom": "Jean",
+  "telephone": "0612345678",
+  "adresse": "Nouvelle adresse"
+}
+```
+
+### 3.9 Supprimer un patient
+```http
+DELETE /patients/{id}
+```
+
+### 3.10 Statistiques
+```http
+GET /patients/stats/count
+```
+**Réponse :** `156`
+
+```http
+GET /patients/stats/count-by-medecin/{medecinId}
+```
+**Réponse :** `23`
+
+---
+
+## 4. Médecins
+
+### 4.1 Liste des médecins
+```http
+GET /medecins
+```
+**Réponse :**
+```json
+[
+  {
+    "id": 2,
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "email": "jean.dupont@clinique.local",
+    "login": "medecin",
+    "numeroLicence": "LIC-0001",
+    "cabinet": "Cabinet A",
+    "actif": true,
+    "specialite": {
+      "id": 1,
+      "nom": "Cardiologie"
+    }
+  }
+]
+```
+
+### 4.2 Médecins actifs
+```http
+GET /medecins/actifs
+```
+
+### 4.3 Médecin par ID
+```http
+GET /medecins/{id}
+```
+
+### 4.4 Médecin par login
+```http
+GET /medecins/login/{login}
+```
+
+### 4.5 Médecin par email
+```http
+GET /medecins/email/{email}
+```
+
+### 4.6 Médecins par spécialité
+```http
+GET /medecins/specialite/{specialiteId}
+```
+
+### 4.7 Rechercher un médecin
+```http
+GET /medecins/search?keyword={nom}
+```
+
+### 4.8 Jours disponibles d'un médecin
+```http
+GET /medecins/{id}/jours-disponibles
+```
+**Réponse :**
+```json
+["LUNDI", "MARDI", "MERCREDI", "JEUDI", "VENDREDI"]
+```
+
+### 4.9 Créer un médecin
+```http
+POST /medecins
+```
+**Body :**
+```json
+{
+  "nom": "Dupont",
+  "prenom": "Jean",
+  "email": "jean.dupont@clinique.com",
+  "login": "jdupont",
+  "motDePasse": "password123",
+  "numeroLicence": "LIC-0001",
+  "cabinet": "Cabinet A",
+  "specialiteId": 1,
+  "joursDisponibles": ["LUNDI", "MARDI", "MERCREDI"]
+}
+```
+
+### 4.10 Modifier un médecin
+```http
+PUT /medecins/{id}
+```
+**Body :**
+```json
+{
+  "nom": "Dupont",
+  "prenom": "Jean",
+  "cabinet": "Nouveau Cabinet"
+}
+```
+
+### 4.11 Activer un médecin
+```http
+PATCH /medecins/{id}/activer
+```
+
+### 4.12 Désactiver un médecin
+```http
+PATCH /medecins/{id}/desactiver
+```
+
+### 4.13 Supprimer un médecin
+```http
+DELETE /medecins/{id}
+```
+
+### 4.14 Statistiques
+```http
+GET /medecins/stats/count
+```
+**Réponse :** `8`
+
+```http
+GET /medecins/stats/count-actifs
+```
+**Réponse :** `7`
+
+```http
+GET /medecins/stats/count-by-specialite/{specialiteId}
+```
+**Réponse :** `3`
+
+---
+
+## 5. Rendez-vous
+
+### 5.1 Liste des rendez-vous
+```http
+GET /rendezvous
+```
+**Réponse :**
+```json
+[
+  {
+    "id": 1,
+    "dateHeure": "2024-04-10T10:00:00",
+    "duree": 30,
+    "statut": "PREVU",
+    "motif": "Consultation",
+    "patient": {
+      "id": 1,
+      "nom": "Rakoto",
+      "prenom": "Jean"
+    },
+    "medecin": {
+      "id": 2,
+      "nom": "Dupont",
+      "prenom": "Jean"
+    }
+  }
+]
+```
+
+### 5.2 Rendez-vous par ID
+```http
+GET /rendezvous/{id}
+```
+
+### 5.3 Rendez-vous d'un patient
+```http
+GET /rendezvous/patient/{patientId}
+```
+
+### 5.4 Rendez-vous d'un médecin
+```http
+GET /rendezvous/medecin/{medecinId}
+```
+
+### 5.5 Rendez-vous par date
+```http
+GET /rendezvous/date?date=2024-04-10
+```
+
+### 5.6 Rendez-vous du jour
+```http
+GET /rendezvous/du-jour
+```
+
+### 5.7 Rendez-vous par statut
+```http
+GET /rendezvous/statut/{statut}
+```
+**Statuts possibles :** `PREVU`, `VALIDE`, `ANNULE`
+
+### 5.8 Prochains rendez-vous d'un patient
+```http
+GET /rendezvous/prochains/patient/{patientId}
+```
+
+### 5.9 Prochains rendez-vous d'un médecin
+```http
+GET /rendezvous/prochains/medecin/{medecinId}?limit=10
+```
+
+### 5.10 Vérifier disponibilité
+```http
+GET /rendezvous/check-disponibilite?medecinId=2&dateHeure=2024-04-15T10:00:00&duree=30
+```
+**Réponse :** `true` ou `false`
+
+### 5.11 Créer un rendez-vous
+```http
+POST /rendezvous
+```
+**Body :**
+```json
+{
+  "patientId": 1,
+  "medecinId": 2,
+  "dateHeure": "2024-04-15T10:00:00",
+  "duree": 30,
+  "motif": "Consultation de contrôle"
+}
+```
+
+### 5.12 Valider un rendez-vous
+```http
+PATCH /rendezvous/{id}/valider
+```
+
+### 5.13 Annuler un rendez-vous
+```http
+PATCH /rendezvous/{id}/annuler?motif=Patient%20indisponible
+```
+
+### 5.14 Supprimer un rendez-vous
+```http
+DELETE /rendezvous/{id}
+```
+
+### 5.15 Statistiques
+```http
+GET /rendezvous/stats/count
+```
+**Réponse :** `42`
+
+```http
+GET /rendezvous/stats/count-du-jour
+```
+**Réponse :** `5`
+
+```http
+GET /rendezvous/stats/count-by-statut?statut=PREVU
+```
+**Réponse :** `15`
+
+---
+
+## 6. Spécialités
+
+### 6.1 Liste des spécialités
+```http
+GET /specialites
+```
+**Réponse :**
+```json
+[
+  {
+    "id": 1,
+    "nom": "Cardiologie",
+    "code": "CAR",
+    "description": "Maladies du cœur",
+    "actif": true
+  }
+]
+```
+
+### 6.2 Spécialités actives
+```http
+GET /specialites/actives
+```
+
+### 6.3 Spécialité par ID
+```http
+GET /specialites/{id}
+```
+
+### 6.4 Spécialité par nom
+```http
+GET /specialites/nom/{nom}
+```
+
+### 6.5 Spécialité par code
+```http
+GET /specialites/code/{code}
+```
+
+### 6.6 Rechercher une spécialité
+```http
+GET /specialites/search?keyword={keyword}
+```
+
+### 6.7 Médecins d'une spécialité
+```http
+GET /specialites/{id}/medecins
+```
+
+### 6.8 Créer une spécialité
+```http
+POST /specialites
+```
+**Body :**
+```json
+{
+  "nom": "Neurologie",
+  "code": "NEU",
+  "description": "Système nerveux"
+}
+```
+
+### 6.9 Modifier une spécialité
+```http
+PUT /specialites/{id}
+```
+**Body :**
+```json
+{
+  "nom": "Cardiologie",
+  "description": "Maladies du cœur et vaisseaux"
+}
+```
+
+### 6.10 Activer une spécialité
+```http
+PATCH /specialites/{id}/activer
+```
+
+### 6.11 Désactiver une spécialité
+```http
+PATCH /specialites/{id}/desactiver
+```
+
+### 6.12 Supprimer une spécialité
+```http
+DELETE /specialites/{id}
+```
+
+### 6.13 Statistiques
+```http
+GET /specialites/stats/count
+```
+**Réponse :** `10`
+
+```http
+GET /specialites/stats/count-actives
+```
+**Réponse :** `9`
+
+---
+
+## 7. Audit (Logs)
+
+### 7.1 Liste des logs
+```http
+GET /audit
+```
+**Réponse :**
+```json
+[
+  {
+    "id": 1,
+    "utilisateur": "admin",
+    "action": "LOGIN",
+    "entite": "Admin",
+    "entiteId": 1,
+    "details": "Connexion",
+    "adresseIp": "127.0.0.1",
+    "dateAction": "2024-03-10T19:29:23"
+  }
+]
+```
+
+### 7.2 Log par ID
+```http
+GET /audit/{id}
+```
+
+### 7.3 Logs par utilisateur
+```http
+GET /audit/utilisateur/{login}
+```
+
+### 7.4 Logs par action
+```http
+GET /audit/action/{action}
+```
+**Actions possibles :** `LOGIN`, `LOGOUT`, `CREATE`, `UPDATE`, `DELETE`, `VALIDATE`, `CANCEL`
+
+### 7.5 Logs par entité
+```http
+GET /audit/entite/{entite}
+```
+**Entités possibles :** `Admin`, `Medecin`, `Patient`, `Consultation`, `RendezVous`, `Specialite`
+
+### 7.6 Logs par période
+```http
+GET /audit/date?debut=2024-01-01T00:00:00&fin=2024-12-31T23:59:59
+```
+
+### 7.7 Créer un log
+```http
+POST /audit/log
+```
+**Body :**
+```json
+{
+  "action": "EXPORT",
+  "entite": "Patient",
+  "details": "Export de la liste des patients",
+  "utilisateur": "admin"
+}
+```
+
+### 7.8 Supprimer les anciens logs
+```http
+DELETE /audit/old
+```
+**Réponse :**
+```json
+{
+  "message": "15 logs supprimés"
+}
+```
+
+### 7.9 Statistiques
+```http
+GET /audit/stats/count
+```
+**Réponse :** `156`
+
+---
+
+## Codes de réponse HTTP
+
+| Code | Signification |
+|------|---------------|
+| 200 | Succès |
+| 201 | Créé |
+| 204 | Pas de contenu |
+| 400 | Requête invalide |
+| 401 | Non authentifié |
+| 403 | Non autorisé |
+| 404 | Non trouvé |
+| 500 | Erreur serveur |
+
+---
+
+## Exemple complet d'utilisation
+
+### 1. Connexion
+```javascript
+const login = await fetch('http://localhost:5089/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ login: 'admin', motDePasse: 'admin123' })
+});
+const user = await login.json();
+```
+
+### 2. Créer un patient
+```javascript
+const newPatient = await fetch('http://localhost:5089/api/patients', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    nom: 'Rakoto',
+    prenom: 'Jean',
+    email: 'jean@email.com',
+    telephone: '0123456789'
+  })
+});
+const patient = await newPatient.json();
+```
+
+### 3. Créer un rendez-vous
+```javascript
+const rdv = await fetch('http://localhost:5089/api/rendezvous', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    patientId: patient.id,
+    medecinId: 2,
+    dateHeure: '2024-04-20T10:00:00',
+    duree: 30,
+    motif: 'Consultation'
+  })
+});
+```
+
+### 4. Valider le rendez-vous
+```javascript
+await fetch(`http://localhost:5089/api/rendezvous/${rdv.id}/valider`, {
+  method: 'PATCH'
+});
+```
+
+---
+
+## Swagger UI
+
+Documentation interactive disponible sur :
+```
+http://localhost:5089/swagger
+```
+
+---
+
+## Informations techniques
+
+- **Format des dates** : ISO 8601 (`YYYY-MM-DDTHH:MM:SS`)
+- **Encodage** : UTF-8
+- **Content-Type** : `application/json`
+- **Session** : Gérée par cookie HTTP
+```
+
+
