@@ -71,10 +71,35 @@ public class JavaApiClient
         return JsonSerializer.Deserialize<JsonElement>(responseJson);
     }
 
+    // PUT avec action personnalisée (ex: /medecins/1/specialite/2)
+    public async Task<JsonElement> PutAsync<T>(string endpoint, long id, string action, T data)
+    {
+        var fullUrl = $"{_baseUrl}/{endpoint.TrimStart('/')}/{id}/{action}";
+        _logger.LogInformation("Appel PUT avec action: {FullUrl}", fullUrl);
+        
+        var json = JsonSerializer.Serialize(data);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var response = await _httpClient.PutAsync(fullUrl, content);
+        response.EnsureSuccessStatusCode();
+        var responseJson = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<JsonElement>(responseJson);
+    }
+
+    // PATCH pour terminer une consultation
     public async Task PatchAsync(string endpoint, long id)
     {
         var fullUrl = $"{_baseUrl}/{endpoint.TrimStart('/')}/{id}/terminer";
         _logger.LogInformation("Appel PATCH: {FullUrl}", fullUrl);
+        
+        var response = await _httpClient.PatchAsync(fullUrl, null);
+        response.EnsureSuccessStatusCode();
+    }
+
+    // PATCH avec action personnalisée (ex: /medecins/1/activer)
+    public async Task PatchWithActionAsync(string endpoint, long id, string action)
+    {
+        var fullUrl = $"{_baseUrl}/{endpoint.TrimStart('/')}/{id}/{action}";
+        _logger.LogInformation("Appel PATCH avec action: {FullUrl}", fullUrl);
         
         var response = await _httpClient.PatchAsync(fullUrl, null);
         response.EnsureSuccessStatusCode();
