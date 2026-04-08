@@ -1,6 +1,8 @@
 package com.clinique.entity;
 
 import com.clinique.enums.StatutConsultation;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -13,14 +15,17 @@ public class Consultation {
 
     @OneToOne
     @JoinColumn(name = "rendez_vous_id", unique = true)
+    @JsonBackReference  // ← AJOUTER : Empêche la boucle infinie avec RendezVous
     private RendezVous rendezVous;
 
     @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
+    @JsonIgnoreProperties("consultations")  // ← AJOUTER : Ignore la liste des consultations dans Patient
     private Patient patient;
 
     @ManyToOne
     @JoinColumn(name = "medecin_id", nullable = false)
+    @JsonIgnoreProperties("consultations")  // ← AJOUTER : Ignore la liste des consultations dans Medecin
     private Medecin medecin;
 
     @Column(length = 2000)
