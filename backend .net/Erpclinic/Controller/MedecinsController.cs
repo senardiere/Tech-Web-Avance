@@ -100,9 +100,57 @@ public class MedecinsController : ControllerBase
     {
         try
         {
-            var javaEntity = await _javaClient.PostAsync("medecins", dto);
+            _logger.LogInformation("=== CRÉATION MÉDECIN ===");
+            _logger.LogInformation("Nom: {Nom}", dto.Nom);
+            _logger.LogInformation("Prénom: {Prenom}", dto.Prenom);
+            _logger.LogInformation("Email: {Email}", dto.Email);
+            _logger.LogInformation("Login: {Login}", dto.Login);
+            
+            // Validation des champs obligatoires
+            if (string.IsNullOrWhiteSpace(dto.Nom))
+                return BadRequest(new { error = "Le nom est obligatoire" });
+            
+            if (string.IsNullOrWhiteSpace(dto.Prenom))
+                return BadRequest(new { error = "Le prénom est obligatoire" });
+            
+            if (string.IsNullOrWhiteSpace(dto.Email))
+                return BadRequest(new { error = "L'email est obligatoire" });
+            
+            if (string.IsNullOrWhiteSpace(dto.Login))
+                return BadRequest(new { error = "Le login est obligatoire" });
+            
+            if (string.IsNullOrWhiteSpace(dto.Password))
+                return BadRequest(new { error = "Le mot de passe est obligatoire" });
+            
+            // Mapper vers le format Java (snake_case)
+            var javaRequest = new JavaMedecinRequestDto
+            {
+                last_name = dto.Nom,
+                first_name = dto.Prenom,
+                email = dto.Email,
+                login = dto.Login,
+                mot_de_passe = dto.Password,
+                telephone = null,  // Pas de téléphone dans le DTO
+                numero_licence = dto.NumeroLicence,
+                cabinet = dto.Cabinet,
+                specialite_id = dto.SpecialiteId,
+                role = "MEDECIN",
+                actif = true
+            };
+            
+            _logger.LogInformation("Envoi à Java: {@JavaRequest}", javaRequest);
+            
+            var javaEntity = await _javaClient.PostAsync("medecins", javaRequest);
             var result = MedecinMapper.ToDto(javaEntity);
+            
+            _logger.LogInformation("Médecin créé avec succès, ID: {Id}", result.Id);
+            
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Erreur de communication avec l'API Java");
+            return StatusCode(502, new { error = "Service Java indisponible", detail = ex.Message });
         }
         catch (Exception ex)
         {
@@ -118,7 +166,19 @@ public class MedecinsController : ControllerBase
     {
         try
         {
-            var javaEntity = await _javaClient.PutAsync("medecins", id, dto);
+            var javaRequest = new
+            {
+                last_name = dto.Nom,
+                first_name = dto.Prenom,
+                email = dto.Email,
+                login = dto.Login,
+                numero_licence = dto.NumeroLicence,
+                cabinet = dto.Cabinet,
+                specialite_id = dto.SpecialiteId,
+                jours_disponibles = dto.JoursDisponibles
+            };
+            
+            var javaEntity = await _javaClient.PutAsync("medecins", id, javaRequest);
             var result = MedecinMapper.ToDto(javaEntity);
             return Ok(result);
         }
@@ -138,7 +198,7 @@ public class MedecinsController : ControllerBase
     {
         try
         {
-            var javaEntity = await _javaClient.PutAsync("medecins", id, "specialite", new { specialiteId });
+            var javaEntity = await _javaClient.PutAsync("medecins", id, "specialite", new { specialite_id = specialiteId });
             var result = MedecinMapper.ToDto(javaEntity);
             return Ok(result);
         }

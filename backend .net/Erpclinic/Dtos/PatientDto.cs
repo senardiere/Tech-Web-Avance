@@ -54,3 +54,20 @@ public class UpdatePatientDto
     public string? TelephoneContact { get; set; }
     public long? MedecinTraitantId { get; set; }
 }
+
+// DTO spécifique pour l'appel à l'API Java
+public class JavaPatientRequestDto
+{
+    public string last_name { get; set; } = string.Empty;
+    public string first_name { get; set; } = string.Empty;
+    public string email { get; set; } = string.Empty;
+    public string telephone { get; set; } = string.Empty;
+    public string adresse { get; set; } = string.Empty;
+    public string? date_naissance { get; set; }
+    public string? numero_securite_sociale { get; set; }
+    public string? mutuelle { get; set; }
+    public string? personne_contact { get; set; }
+    public string? telephone_contact { get; set; }
+    public long? medecin_traitant_id { get; set; }
+    public string statut { get; set; } = "ACTIF";
+}

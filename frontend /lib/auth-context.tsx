@@ -19,27 +19,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    // CRUCIAL : Utiliser uniquement le localStorage, pas d'appel API
+    const loadUserFromStorage = () => {
       try {
-        const currentUser = await apiClient.getCurrentUser();
-        setUser(currentUser);
+        const token = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+        
+        console.log('Loading user from storage - Token:', !!token, 'User:', !!storedUser);
+        
+        if (token && storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          console.log('User loaded from storage:', parsedUser);
+          setUser(parsedUser);
+        } else {
+          console.log('No user found in storage');
+          setUser(null);
+        }
       } catch (error) {
-        console.error('Failed to fetch current user:', error);
+        console.error('Error loading user from storage:', error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
-
-    checkAuth();
+    
+    loadUserFromStorage();
   }, []);
 
   const login = async (login: string, motDePasse: string) => {
-    const user = await apiClient.login(login, motDePasse);
-    setUser(user);
+    try {
+      const userData = await apiClient.login(login, motDePasse);
+      console.log('Login successful:', userData);
+      
+      // Stocker dans localStorage
+      localStorage.setItem('token', userData.token || 'dummy-token');
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      setUser(userData);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
   const logout = async () => {
-    await apiClient.logout();
+    try {
+      await apiClient.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 

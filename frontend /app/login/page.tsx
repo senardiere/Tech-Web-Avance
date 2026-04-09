@@ -156,7 +156,7 @@ export default function LoginPage() {
                 </Button>
               </form>
 
-              <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
+              {/* <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
                 <p className="text-xs font-medium text-muted-foreground mb-2">
                   Identifiants de demonstration
                 </p>
@@ -170,7 +170,7 @@ export default function LoginPage() {
                     <code className="rounded bg-background px-2 py-0.5 text-foreground">admin123</code>
                   </p>
                 </div>
-              </div>
+              </div> */}
             </CardContent>
           </Card>
         </div>

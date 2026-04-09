@@ -3,9 +3,11 @@ package com.clinique.endpoint;
 import com.clinique.entity.Medecin;
 import com.clinique.entity.Specialite;
 import com.clinique.service.MedecinService;
+import com.clinique.service.SpecialiteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,9 @@ public class MedecinEndpoint {
 
     @Autowired
     private MedecinService medecinService;
+
+    @Autowired
+    private SpecialiteService specialiteService;
 
     // Conversion manuelle pour éviter la boucle infinie
     private Map<String, Object> convertToMap(Medecin m) {
@@ -106,8 +111,79 @@ public class MedecinEndpoint {
     // ========== POST ==========
 
     @PostMapping
-    public Medecin createMedecin(@RequestBody Medecin medecin) {
-        return medecinService.createMedecin(medecin);
+    public Map<String, Object> createMedecin(@RequestBody Map<String, Object> request) {
+        System.out.println("=== CRÉATION MÉDECIN ===");
+        System.out.println("Données reçues: " + request);
+
+        // Extraire les valeurs (snake_case de .NET)
+        String last_name = (String) request.get("last_name");
+        String first_name = (String) request.get("first_name");
+        String email = (String) request.get("email");
+        String login = (String) request.get("login");
+        String mot_de_passe = (String) request.get("mot_de_passe");
+        String numero_licence = (String) request.get("numero_licence");
+        String cabinet = (String) request.get("cabinet");
+        Object specialite_id_obj = request.get("specialite_id");
+
+        // Validation
+        if (last_name == null || last_name.trim().isEmpty()) {
+            throw new RuntimeException("last_name est obligatoire");
+        }
+        if (first_name == null || first_name.trim().isEmpty()) {
+            throw new RuntimeException("first_name est obligatoire");
+        }
+        if (email == null || email.trim().isEmpty()) {
+            throw new RuntimeException("email est obligatoire");
+        }
+        if (login == null || login.trim().isEmpty()) {
+            throw new RuntimeException("login est obligatoire");
+        }
+        if (mot_de_passe == null || mot_de_passe.trim().isEmpty()) {
+            throw new RuntimeException("mot_de_passe est obligatoire");
+        }
+
+        // Créer le médecin
+        Medecin medecin = new Medecin();
+        medecin.setNom(last_name);
+        medecin.setPrenom(first_name);
+        medecin.setEmail(email);
+        medecin.setLogin(login);
+        medecin.setMotDePasse(mot_de_passe);
+        medecin.setActif(true);
+        medecin.setDateCreation(LocalDateTime.now());
+
+        if (numero_licence != null && !numero_licence.trim().isEmpty()) {
+            medecin.setNumeroLicence(numero_licence);
+        }
+        if (cabinet != null && !cabinet.trim().isEmpty()) {
+            medecin.setCabinet(cabinet);
+        }
+
+        // Gérer la spécialité
+        if (specialite_id_obj != null) {
+            Long specialite_id = null;
+            if (specialite_id_obj instanceof Integer) {
+                specialite_id = ((Integer) specialite_id_obj).longValue();
+            } else if (specialite_id_obj instanceof Long) {
+                specialite_id = (Long) specialite_id_obj;
+            }
+            if (specialite_id != null) {
+                try {
+                    Specialite specialite = specialiteService.getSpecialiteById(specialite_id);
+                    if (specialite != null) {
+                        medecin.setSpecialite(specialite);
+                        System.out.println("Spécialité assignée: " + specialite.getNom());
+                    }
+                } catch (Exception e) {
+                    System.out.println("Spécialité non trouvée pour ID: " + specialite_id);
+                }
+            }
+        }
+
+        Medecin saved = medecinService.createMedecin(medecin);
+        System.out.println("Médecin créé avec ID: " + saved.getId());
+
+        return convertToMap(saved);
     }
 
     // ========== PUT ==========

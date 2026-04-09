@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Clinique.Api.DTOs;
 using Clinique.Api.Mappers;
 using Clinique.Api.Services;
+using System.Text.Json;
 
 namespace Clinique.Api.Controllers;
 
@@ -93,9 +94,54 @@ public class PatientsController : ControllerBase
     {
         try
         {
-            var javaEntity = await _javaClient.PostAsync("patients", dto);
+            _logger.LogInformation("=== CRÉATION PATIENT ===");
+            _logger.LogInformation("Nom reçu: {Nom}", dto.Nom);
+            _logger.LogInformation("Prénom reçu: {Prenom}", dto.Prenom);
+            _logger.LogInformation("Email reçu: {Email}", dto.Email);
+            
+            // Valider les champs obligatoires
+            if (string.IsNullOrWhiteSpace(dto.Nom))
+                return BadRequest(new { error = "Le nom est obligatoire" });
+                
+            if (string.IsNullOrWhiteSpace(dto.Prenom))
+                return BadRequest(new { error = "Le prénom est obligatoire" });
+            
+            if (string.IsNullOrWhiteSpace(dto.Email))
+                return BadRequest(new { error = "L'email est obligatoire" });
+            
+            if (string.IsNullOrWhiteSpace(dto.Telephone))
+                return BadRequest(new { error = "Le téléphone est obligatoire" });
+            
+            // Créer un objet avec les noms de champs attendus par Java
+            var javaRequest = new
+            {
+                last_name = dto.Nom,                          // ← Important: underscore
+                first_name = dto.Prenom,                      // ← Important: underscore
+                email = dto.Email,
+                telephone = dto.Telephone,
+                adresse = dto.Adresse ?? "",
+                date_naissance = dto.DateNaissance?.ToString("yyyy-MM-dd"),
+                numero_securite_sociale = dto.NumeroSecuriteSociale,
+                mutuelle = dto.Mutuelle,
+                personne_contact = dto.PersonneContact,
+                telephone_contact = dto.TelephoneContact,
+                medecin_traitant_id = dto.MedecinTraitantId,  // ← Important: underscore
+                statut = "ACTIF"
+            };
+            
+            _logger.LogInformation("Envoi à Java: {@JavaRequest}", javaRequest);
+            
+            var javaEntity = await _javaClient.PostAsync("patients", javaRequest);
             var result = PatientMapper.ToDto(javaEntity);
+            
+            _logger.LogInformation("Patient créé avec succès, ID: {Id}", result.Id);
+            
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Erreur de communication avec l'API Java");
+            return StatusCode(502, new { error = "Service Java indisponible", detail = ex.Message });
         }
         catch (Exception ex)
         {
@@ -111,7 +157,22 @@ public class PatientsController : ControllerBase
     {
         try
         {
-            var javaEntity = await _javaClient.PutAsync("patients", id, dto);
+            // Créer un objet avec les noms de champs attendus par Java
+            var javaRequest = new
+            {
+                last_name = dto.Nom,
+                first_name = dto.Prenom,
+                email = dto.Email,
+                telephone = dto.Telephone,
+                adresse = dto.Adresse,
+                date_naissance = dto.DateNaissance?.ToString("yyyy-MM-dd"),
+                mutuelle = dto.Mutuelle,
+                personne_contact = dto.PersonneContact,
+                telephone_contact = dto.TelephoneContact,
+                medecin_traitant_id = dto.MedecinTraitantId
+            };
+            
+            var javaEntity = await _javaClient.PutAsync("patients", id, javaRequest);
             var result = PatientMapper.ToDto(javaEntity);
             return Ok(result);
         }

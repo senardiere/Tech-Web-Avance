@@ -45,3 +45,19 @@ public class UpdateMedecinDto
     public long? SpecialiteId { get; set; }
     public List<string>? JoursDisponibles { get; set; }
 }
+
+// ========== AJOUTEZ CETTE CLASSE ==========
+public class JavaMedecinRequestDto
+{
+    public string last_name { get; set; } = string.Empty;
+    public string first_name { get; set; } = string.Empty;
+    public string email { get; set; } = string.Empty;
+    public string login { get; set; } = string.Empty;
+    public string mot_de_passe { get; set; } = string.Empty;
+    public string? telephone { get; set; }
+    public string? numero_licence { get; set; }
+    public string? cabinet { get; set; }
+    public long? specialite_id { get; set; }
+    public string role { get; set; } = "MEDECIN";
+    public bool actif { get; set; } = true;
+}

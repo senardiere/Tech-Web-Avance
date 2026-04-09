@@ -1,6 +1,7 @@
 package com.clinique.entity;
 
 import com.clinique.enums.StatutPatient;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -41,7 +42,7 @@ public class Patient {
     private String telephoneContact;
 
     @Enumerated(EnumType.STRING)
-    private StatutPatient statut = StatutPatient.ACTIF;  // ← Plus d'erreur
+    private StatutPatient statut = StatutPatient.ACTIF;
 
     @Column(name = "date_creation")
     private LocalDateTime dateCreation = LocalDateTime.now();
@@ -51,6 +52,7 @@ public class Patient {
 
     @ManyToOne
     @JoinColumn(name = "medecin_traitant_id")
+    @JsonIgnore  // ← AJOUTEZ CETTE LIGNE pour éviter la boucle infinie
     private Medecin medecinTraitant;
 
     // Constructeurs
