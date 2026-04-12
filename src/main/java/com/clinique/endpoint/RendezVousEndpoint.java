@@ -1,14 +1,19 @@
 package com.clinique.endpoint;
 
 import com.clinique.entity.RendezVous;
+import com.clinique.entity.Patient;
+import com.clinique.entity.Medecin;
 import com.clinique.enums.StatutRendezVous;
 import com.clinique.service.RendezVousService;
+import com.clinique.service.PatientService;
+import com.clinique.service.MedecinService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +25,12 @@ public class RendezVousEndpoint {
 
     @Autowired
     private RendezVousService rendezVousService;
+
+    @Autowired
+    private PatientService patientService;
+
+    @Autowired
+    private MedecinService medecinService;
 
     // Conversion manuelle pour éviter la boucle infinie
     private Map<String, Object> convertToMap(RendezVous r) {
@@ -170,8 +181,90 @@ public class RendezVousEndpoint {
     // ========== POST ==========
 
     @PostMapping
-    public RendezVous createRendezVous(@RequestBody RendezVous rendezVous) {
-        return rendezVousService.createRendezVous(rendezVous);
+    public Map<String, Object> createRendezVous(@RequestBody Map<String, Object> request) {
+        System.out.println("=== CRÉATION RENDEZ-VOUS JAVA ===");
+        System.out.println("Données reçues: " + request);
+
+        // Extraire les valeurs
+        Object patientIdObj = request.get("patient_id");
+        Object medecinIdObj = request.get("medecin_id");
+        String dateHeureStr = (String) request.get("date_heure");
+        Integer duree = null;
+        if (request.get("duree") instanceof Integer) {
+            duree = (Integer) request.get("duree");
+        } else if (request.get("duree") instanceof String) {
+            duree = Integer.parseInt((String) request.get("duree"));
+        }
+        String motif = (String) request.get("motif");
+        String statutStr = (String) request.get("statut");
+        String datePriseStr = (String) request.get("date_prise");
+
+        // Validation
+        if (patientIdObj == null) {
+            throw new IllegalArgumentException("Le patient est obligatoire");
+        }
+        if (medecinIdObj == null) {
+            throw new IllegalArgumentException("Le médecin est obligatoire");
+        }
+        if (dateHeureStr == null || dateHeureStr.trim().isEmpty()) {
+            throw new IllegalArgumentException("La date du rendez-vous est obligatoire");
+        }
+
+        Long patientId = null;
+        Long medecinId = null;
+
+        if (patientIdObj instanceof Integer) {
+            patientId = ((Integer) patientIdObj).longValue();
+        } else if (patientIdObj instanceof Long) {
+            patientId = (Long) patientIdObj;
+        }
+
+        if (medecinIdObj instanceof Integer) {
+            medecinId = ((Integer) medecinIdObj).longValue();
+        } else if (medecinIdObj instanceof Long) {
+            medecinId = (Long) medecinIdObj;
+        }
+
+        // Récupérer le patient et le médecin
+        Patient patient = patientService.getPatientById(patientId);
+        Medecin medecin = medecinService.getMedecinById(medecinId);
+
+        if (patient == null) {
+            throw new IllegalArgumentException("Patient non trouvé avec ID: " + patientId);
+        }
+        if (medecin == null) {
+            throw new IllegalArgumentException("Médecin non trouvé avec ID: " + medecinId);
+        }
+
+        // Parser la date
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        LocalDateTime dateHeure = LocalDateTime.parse(dateHeureStr, formatter);
+        LocalDateTime datePrise = datePriseStr != null ? LocalDateTime.parse(datePriseStr, formatter) : LocalDateTime.now();
+
+        // Créer le rendez-vous
+        RendezVous rendezVous = new RendezVous();
+        rendezVous.setPatient(patient);
+        rendezVous.setMedecin(medecin);
+        rendezVous.setDateHeure(dateHeure);
+        rendezVous.setDuree(duree != null ? duree : 30);
+        rendezVous.setMotif(motif);
+        rendezVous.setDatePrise(datePrise);
+
+        // Définir le statut
+        if (statutStr != null) {
+            try {
+                rendezVous.setStatut(StatutRendezVous.valueOf(statutStr));
+            } catch (IllegalArgumentException e) {
+                rendezVous.setStatut(StatutRendezVous.PREVU);
+            }
+        } else {
+            rendezVous.setStatut(StatutRendezVous.PREVU);
+        }
+
+        RendezVous saved = rendezVousService.createRendezVous(rendezVous);
+        System.out.println("Rendez-vous créé avec ID: " + saved.getId());
+
+        return convertToMap(saved);
     }
 
     // ========== PATCH ==========

@@ -46,7 +46,7 @@ public class UpdateMedecinDto
     public List<string>? JoursDisponibles { get; set; }
 }
 
-// ========== AJOUTEZ CETTE CLASSE ==========
+
 public class JavaMedecinRequestDto
 {
     public string last_name { get; set; } = string.Empty;

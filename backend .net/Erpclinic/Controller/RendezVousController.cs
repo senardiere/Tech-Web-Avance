@@ -143,9 +143,52 @@ public class RendezVousController : ControllerBase
     {
         try
         {
-            var javaEntity = await _javaClient.PostAsync("rendezvous", dto);
+            _logger.LogInformation("=== CRÉATION RENDEZ-VOUS ===");
+            _logger.LogInformation("PatientId: {PatientId}", dto.PatientId);
+            _logger.LogInformation("MedecinId: {MedecinId}", dto.MedecinId);
+            _logger.LogInformation("DateHeure: {DateHeure}", dto.DateHeure);
+            _logger.LogInformation("Duree: {Duree}", dto.Duree);
+            _logger.LogInformation("Motif: {Motif}", dto.Motif);
+            
+            // Validation
+            if (dto.PatientId <= 0)
+                return BadRequest(new { error = "Le patient est obligatoire" });
+            
+            if (dto.MedecinId <= 0)
+                return BadRequest(new { error = "Le médecin est obligatoire" });
+            
+            if (dto.DateHeure == default)
+                return BadRequest(new { error = "La date et heure sont obligatoires" });
+            
+            // Formater la date au format ISO 8601 avec T (ex: 2026-04-10T12:00:00)
+            // C'est le format standard que Java comprend
+            var dateFormatted = dto.DateHeure.ToString("yyyy-MM-dd'T'HH:mm:ss");
+            
+            // Mapper vers le format Java (snake_case)
+            var javaRequest = new
+            {
+                patient_id = dto.PatientId,
+                medecin_id = dto.MedecinId,
+                date_heure = dateFormatted,
+                duree = dto.Duree,
+                motif = dto.Motif ?? "",
+                statut = "PREVU",
+                date_prise = DateTime.Now.ToString("yyyy-MM-dd'T'HH:mm:ss")
+            };
+            
+            _logger.LogInformation("Envoi à Java: {@JavaRequest}", javaRequest);
+            
+            var javaEntity = await _javaClient.PostAsync("rendezvous", javaRequest);
             var result = RendezVousMapper.ToDto(javaEntity);
+            
+            _logger.LogInformation("Rendez-vous créé avec succès, ID: {Id}", result.Id);
+            
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Erreur de communication avec l'API Java");
+            return StatusCode(502, new { error = "Service Java indisponible", detail = ex.Message });
         }
         catch (Exception ex)
         {
@@ -161,7 +204,15 @@ public class RendezVousController : ControllerBase
     {
         try
         {
-            var javaEntity = await _javaClient.PutAsync("rendezvous", id, dto);
+            // Mapper vers le format Java (snake_case)
+            var javaRequest = new
+            {
+                date_heure = dto.DateHeure?.ToString("yyyy-MM-dd'T'HH:mm:ss"),
+                duree = dto.Duree,
+                motif = dto.Motif
+            };
+            
+            var javaEntity = await _javaClient.PutAsync("rendezvous", id, javaRequest);
             var result = RendezVousMapper.ToDto(javaEntity);
             return Ok(result);
         }
